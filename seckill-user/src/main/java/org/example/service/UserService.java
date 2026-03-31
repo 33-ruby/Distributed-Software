@@ -3,7 +3,7 @@ package org.example.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.example.mapper.UserMapper;
 import org.example.pojo.User;
-import org.example.JwtUtil;
+import org.example.common.JwtUtil;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

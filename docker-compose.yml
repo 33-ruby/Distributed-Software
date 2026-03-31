@@ -32,8 +32,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=truedocker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 123456
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     networks:
       - seckill-net
 
@@ -49,8 +49,28 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 123456
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    networks:
+      - seckill-net
+
+  product-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.product
+    container_name: product-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
     networks:
       - seckill-net
 

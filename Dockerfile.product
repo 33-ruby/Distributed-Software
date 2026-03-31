@@ -1,0 +1,15 @@
+FROM amazoncorretto:21-alpine AS builder
+WORKDIR /build
+RUN apk add --no-cache maven
+
+# 复制整个项目（父pom + 所有子模块）
+COPY . .
+
+# 只编译 product 子模块，-am 自动包含依赖的父模块
+RUN mvn package -pl seckill-product -am -DskipTests -q
+
+FROM amazoncorretto:21
+WORKDIR /app
+COPY --from=builder /build/seckill-product/target/seckill-product-1.0-SNAPSHOT.jar app.jar
+EXPOSE 8083
+ENTRYPOINT ["java", "-jar", "app.jar"]
