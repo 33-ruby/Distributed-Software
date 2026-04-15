@@ -1,6 +1,7 @@
 package org.example.product.controller;
 
 import org.example.common.Result;
+import org.example.product.pojo.Product;
 import org.example.product.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -16,5 +17,10 @@ public class ProductController {
     public Result getProduct(@PathVariable("id") Long id) {
         System.out.println("收到请求，商品ID：" + id);
         return Result.success(productService.getProductDetail(id));
+    }
+
+    @PostMapping("/save")
+    public Product save(@RequestBody Product product) {
+        return productService.saveProduct(product);
     }
 }

@@ -1,4 +1,4 @@
-package org.example.controller;
+package org.example.product.controller;
 
 import org.example.common.Result;
 import org.example.service.UserService;

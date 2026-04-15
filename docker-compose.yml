@@ -1,14 +1,33 @@
 services:
-  mysql:
+  mysql-master:
     image: mysql:8.0
-    container_name: mysql
+    platform: linux/amd64
+    container_name: mysql-master
     environment:
-      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: seckill_db
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - ./mysql/master/data:/var/lib/mysql
+      - ./mysql/master/conf/master.cnf:/etc/mysql/conf.d/master.cnf
+    networks:
+      - seckill-net
+
+  mysql-slave:
+    image: mysql:8.0
+    platform: linux/amd64
+    container_name: mysql-slave
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: seckill_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./mysql/slave/data:/var/lib/mysql
+      - ./mysql/slave/conf/slave.cnf:/etc/mysql/conf.d/slave.cnf
+    depends_on:
+      - mysql-master
     networks:
       - seckill-net
 
@@ -26,12 +45,12 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - mysql
+      - mysql-master
       - redis
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=truedocker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2docker-compose logs user-service-2
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-master:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATASOURCE_PASSWORD: root123
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     networks:
@@ -41,14 +60,14 @@ services:
     build: ./seckill-user
     container_name: user-service-2
     ports:
-      - "8082:8081"   # 宿主机 8082 -> 容器 8081
+      - "8082:8081"
     depends_on:
-      - mysql
+      - mysql-master
       - redis
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-master:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATASOURCE_PASSWORD: root123
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     networks:
@@ -62,13 +81,19 @@ services:
     ports:
       - "8083:8083"
     depends_on:
-      - mysql
+      - mysql-master
+      - mysql-slave
       - redis
     environment:
       - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=123456
+      # 主库（写）
+      - SPRING_DATASOURCE_MASTER_URL=jdbc:mysql://mysql-master:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_MASTER_USERNAME=root
+      - SPRING_DATASOURCE_MASTER_PASSWORD=root123
+      # 从库（读）
+      - SPRING_DATASOURCE_SLAVE_URL=jdbc:mysql://mysql-slave:3306/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_SLAVE_USERNAME=root
+      - SPRING_DATASOURCE_SLAVE_PASSWORD=root123
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
     networks:
@@ -90,6 +115,3 @@ services:
 networks:
   seckill-net:
     driver: bridge
-
-volumes:
-  mysql-data:

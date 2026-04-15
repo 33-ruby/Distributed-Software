@@ -1,6 +1,5 @@
 package org.example.product.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.example.product.mapper.ProductMapper;
 import org.example.product.pojo.Product;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,4 +71,11 @@ public class ProductService {
             return getProductDetail(id);
         }
     }
+
+    public Product saveProduct(Product product) {
+        productMapper.insert(product);
+        log.info(">>> 插入商品: {}", product.getGoodsName());
+        return product;
+    }
+
 }
