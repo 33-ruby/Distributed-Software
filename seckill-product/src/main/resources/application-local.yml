@@ -2,15 +2,31 @@ spring:
   datasource:
     dynamic:
       primary: master
-      strict: false
       datasource:
         master:
-          url: jdbc:mysql://localhost:3307/seckill_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
+          url: jdbc:mysql://127.0.0.1:3307/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf-8
           username: root
-          password: root
+          password: root123
           driver-class-name: com.mysql.cj.jdbc.Driver
         slave:
-          url: jdbc:mysql://localhost:3308/seckill_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
+          url: jdbc:mysql://127.0.0.1:3308/seckill_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf-8
           username: root
-          password: root
+          password: root123
           driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
+    consumer:
+      group-id: seckill-group
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+server:
+  port: 8083 # Product 端口

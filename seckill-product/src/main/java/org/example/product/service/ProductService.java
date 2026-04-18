@@ -1,5 +1,6 @@
 package org.example.product.service;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import org.example.product.mapper.ProductMapper;
 import org.example.product.pojo.Product;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,27 +20,26 @@ public class ProductService {
     private RedisTemplate<String, Object> redisTemplate;
 
     private static final String CACHE_KEY = "product:detail:";
-    private static final String EMPTY_VALUE = "EMPTY";//空值哨兵
+    private static final String EMPTY_VALUE = "EMPTY";
 
+    @DS("slave")  // 读操作走从库
     public Product getProductDetail(Long id) {
         String key = CACHE_KEY + id;
 
         Object cached = redisTemplate.opsForValue().get(key);
 
         if (EMPTY_VALUE.equals(cached)) {
-            return null;  // 命中空值缓存，直接返回，不查DB
+            return null;
         }
         if (cached != null) {
-            return (Product) cached;  // 命中正常缓存
+            return (Product) cached;
         }
 
-        // 缓存未命中，加锁
         String lockKey = "product:lock:" + id;
         Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", 10, TimeUnit.SECONDS);
 
         if (Boolean.TRUE.equals(locked)) {
             try {
-                // 双重检查
                 Object cachedAgain = redisTemplate.opsForValue().get(key);
                 if (EMPTY_VALUE.equals(cachedAgain)) {
                     return null;
@@ -48,7 +48,6 @@ public class ProductService {
                     return (Product) cachedAgain;
                 }
 
-                // 查DB
                 Product product = productMapper.selectById(id);
                 log.info(">>> 查询数据库 productId={}", id);
                 if (product != null) {
@@ -72,10 +71,10 @@ public class ProductService {
         }
     }
 
+    @DS("master")  // 写操作走主库
     public Product saveProduct(Product product) {
         productMapper.insert(product);
         log.info(">>> 插入商品: {}", product.getGoodsName());
         return product;
     }
-
 }
