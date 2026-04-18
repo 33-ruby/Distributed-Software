@@ -13,4 +13,7 @@ public interface SeckillOrderService {
 
     // 按用户ID查询
     List<Order> getByUserId(Long userId);
+
+    // 支付接口
+    String payOrder(Long orderId);
 }

@@ -1,0 +1,14 @@
+### 测试秒杀下单
+POST http://localhost:8084/order/seckill
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "productId": 1
+}
+
+### 按用户ID查询订单
+GET http://localhost:8084/order/user/1
+
+### 支付订单（orderId替换成实际订单号）
+POST http://localhost:8084/order/pay/123456789

@@ -32,4 +32,10 @@ public class OrderController {
     public List<Order> getByUserId(@PathVariable Long userId) {
         return orderService.getByUserId(userId);
     }
+
+    // 订单支付
+    @PostMapping("/pay/{orderId}")
+    public String pay(@PathVariable Long orderId) {
+        return orderService.payOrder(orderId);
+    }
 }

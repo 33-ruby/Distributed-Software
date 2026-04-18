@@ -1,6 +1,8 @@
 package org.example.seckillorder.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.example.common.dto.SeckillMessage;
 import org.example.seckillorder.dto.OrderMessageDTO;
 import org.example.seckillorder.entity.Order;
 import org.example.seckillorder.mapper.OrderMapper;
@@ -9,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import com.alibaba.fastjson.JSON;
-import org.example.common.dto.SeckillMessage;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
         Long count = orderMapper.selectCount(
                 new QueryWrapper<Order>()
                         .eq("user_id", userId)
-                        .eq("item_id", itemId)
+                        .eq("goods_id", itemId)
         );
         if (count > 0) {
             return "您已参与过该商品的秒杀，请勿重复下单";
@@ -48,7 +48,6 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
         String stockKey = STOCK_KEY + itemId;
         Long stock = redisTemplate.opsForValue().decrement(stockKey);
         if (stock == null || stock < 0) {
-            // 库存不足，回滚
             redisTemplate.opsForValue().increment(stockKey);
             return "库存不足，秒杀失败";
         }
@@ -72,5 +71,33 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
         return orderMapper.selectList(
                 new QueryWrapper<Order>().eq("user_id", userId)
         );
+    }
+
+    @Override
+    public String payOrder(Long orderId) {
+        // 1. 查询订单
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            return "订单不存在";
+        }
+        if (order.getStatus() != 0) {
+            return "订单状态异常，当前状态: " + order.getStatus();
+        }
+
+        // 2. 更新订单状态为已支付
+        order.setStatus(1);
+        int rows = orderMapper.updateById(order);
+        if (rows <= 0) {
+            return "订单状态更新失败";
+        }
+
+        // 3. 发送支付成功消息，保证后续处理最终一致
+        SeckillMessage msg = new SeckillMessage();
+        msg.setUserId(order.getUserId());
+        msg.setItemId(order.getGoodsId());
+        kafkaTemplate.send("pay_topic", JSON.toJSONString(msg));
+        System.out.println("支付成功消息已发送，orderId=" + orderId);
+
+        return "支付成功，订单号: " + orderId;
     }
 }

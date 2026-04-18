@@ -9,6 +9,7 @@ import org.example.seckillorder.entity.Order;
 import org.example.seckillorder.mapper.OrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,6 +17,7 @@ public class OrderConsumer {
 
     @Autowired
     private OrderMapper orderMapper;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     private Snowflake snowflake = IdUtil.getSnowflake(1, 1);
 
@@ -43,13 +45,15 @@ public class OrderConsumer {
             Order order = new Order();
             order.setId(snowflake.nextId());
             order.setUserId(seckillMessage.getUserId());
-            order.setItemId(seckillMessage.getItemId());
+            order.setGoodsId(seckillMessage.getItemId());
             order.setStatus(0); // 待支付
 
             // 4. 插入数据库
             orderMapper.insert(order);
             System.out.println("雪花ID订单入库成功，订单号: " + order.getId());
 
+            kafkaTemplate.send("stock_deduct_topic", JSON.toJSONString(seckillMessage));
+            System.out.println("已发送库存扣减消息，itemId=" + seckillMessage.getItemId());
         } catch (Exception e) {
             System.err.println("消费订单消息失败: " + e.getMessage());
         }
