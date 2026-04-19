@@ -44,6 +44,19 @@ services:
     networks:
       - seckill-net
 
+  # --- Nacos ---
+  nacos:
+    image: nacos/nacos-server:v2.1.0
+    container_name: nacos
+    environment:
+      - MODE=standalone
+      - NACOS_AUTH_ENABLE=false
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    networks:
+      - seckill-net
+
   # --- 消息队列：Zookeeper + Kafka ---
   zookeeper:
     image: wurstmeister/zookeeper

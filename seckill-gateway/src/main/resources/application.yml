@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: seckill-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: seckill-user
+          uri: lb://seckill-user
+          predicates:
+            - Path=/user/**
+
+        - id: seckill-product
+          uri: lb://seckill-product
+          predicates:
+            - Path=/product/**
+
+        - id: seckill-order
+          uri: lb://seckill-order
+          predicates:
+            - Path=/order/**
